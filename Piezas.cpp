@@ -1,5 +1,6 @@
 #include "Piezas.h"
 #include <vector>
+#include <iostream>
 /** CLASS Piezas
  * Class for representing a Piezas vertical board, which is roughly based
  * on the game "Connect Four" where pieces are placed in a column and 
@@ -20,8 +21,11 @@
  * Constructor sets an empty board (default 3 rows, 4 columns) and 
  * specifies it is X's turn first
 **/
+
 Piezas::Piezas()
 {
+  board = std::vector<std::vector<Piece>>(BOARD_ROWS, std::vector<Piece>(BOARD_COLS,Blank));
+  turn = X;
 }
 
 /**
@@ -30,6 +34,11 @@ Piezas::Piezas()
 **/
 void Piezas::reset()
 {
+  for(int i = 0; i < BOARD_ROWS; i++)
+  {
+    for(int j = 0; j < BOARD_COLS; j++)
+      board[i][j] = Blank;
+  }
 }
 
 /**
@@ -42,6 +51,56 @@ void Piezas::reset()
 **/ 
 Piece Piezas::dropPiece(int column)
 {
+  //First check if given column is out of bounds
+  if(column >= BOARD_COLS)
+  {
+    //change turns if placed out of bounds
+    if(turn == X)
+      turn = O;
+    else
+      turn = X;
+    return Invalid; 
+  }
+
+  //Switch on turns X and O
+  switch(turn)
+  {
+    //if turn is X
+    case X:
+      {
+        for(int i = 0; i < BOARD_ROWS; i++)
+        {
+          for(int j = 0; j < BOARD_COLS; j++)
+          {
+            //check to see we have right column, and is not already taken up by X or O
+            if( (j == column) && (board[i][j] != X) && (board[i][j] != O) )
+            {
+              board[i][j] = X;
+              turn = O;
+              return X;
+            }
+          }
+        }//for
+        break;
+      }
+    //if turn is O
+    case O:
+      {
+        for(int i = 0; i < BOARD_ROWS; i++)
+        {
+          for(int j = 0; j < BOARD_COLS; j++)
+          {
+            if( j == column && (board[i][j] != X) && (board[i][j] != O) )
+            {
+              board[i][j] = O;
+              turn = X;
+              return O;
+            }
+          }
+        }//for
+        break;
+      }
+  }//switch
     return Blank;
 }
 
@@ -51,6 +110,18 @@ Piece Piezas::dropPiece(int column)
 **/
 Piece Piezas::pieceAt(int row, int column)
 {
+  //if row or column is out of bounds
+  if(row >= BOARD_ROWS || column >= BOARD_COLS)
+    return Invalid;
+
+  //create temp piece and check if blank/X/O
+  Piece temp = board[row][column];
+
+  if(temp == X)
+    return X;
+  else if(temp == O)
+    return O;
+  else
     return Blank;
 }
 
@@ -65,5 +136,69 @@ Piece Piezas::pieceAt(int row, int column)
 **/
 Piece Piezas::gameState()
 {
+  //temporarily keep track of X and O totals
+  int xTot = 0;
+  int oTot = 0;
+
+  //tmp track count of X/O horizontally
+  int xHor = 0;
+  int oHor = 0;
+
+  //tmp track count of X/O vertically
+  int xVer = 0;
+  int oVer = 0;
+
+  //if board is empty, game not over
+  if(board.empty())
+    return Invalid;
+
+
+  //check the columns first for counts
+  for(int i = 0; i < BOARD_ROWS; i++)
+  {
+    for(int j = 0; j < BOARD_COLS; j++)
+    {
+      //check if any spaces have blanks or invalids, if so game can't be over
+      if( (board[i][j] == Blank)  )
+        return Invalid;
+
+      if(board[i][j] == X)
+        xVer++;
+      else if(board[i][j] == O)
+        oVer++;
+
+    }
+
+    if(xTot < xVer)
+      xTot = xVer;
+    if(oTot < oVer)
+      oTot = oVer;
+  }
+
+  for(int i = 0; i < BOARD_COLS; i++)
+  {
+    for(int j = 0; j < BOARD_ROWS; j++)
+    {
+      //No need to check for blank space here, already checked in above loop
+
+      if(board[j][i] == X)
+        xHor++;
+      else if(board[j][i] == O)
+        oHor++;
+
+    }
+
+    if(xTot < xHor)
+      xTot = xHor;
+    if(oTot < oHor)
+      oTot = oVer;
+  }
+
+  if(xTot > oTot)
+    return X;
+  else if(oTot > xTot)
+    return O;
+  else
     return Blank;
+
 }
